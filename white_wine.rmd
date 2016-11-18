@@ -1,0 +1,496 @@
+---
+output: pdf_document
+---
+White Wine Quality Exploration by Swain Tseng
+========================================================
+
+
+
+##### The report explore a dataset containing quality and attributes for 4898 white wines. This dataset has 13 variables which contains 9 variables of ingredient, 2 variables of physical properity, 1 variable of quantity and 1 of quality. The reason why I pick this dataset is to analysize what ingredients would influence quality of white wine and find some relationship between every variables and if I could do that maybe one day we can use computer to measure quality in the future.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE,Load_the_Data}
+# Load the Data
+
+wq <- read.csv('wineQualityWhites.csv')
+
+library(ggplot2)
+library(dplyr)
+library(GGally)
+library(ggthemes)
+library(Hmisc)
+library(psych)
+library(corrplot)
+library(RColorBrewer)
+library(memisc)
+library(scales)
+```
+
+# Univariate Plots Section
+```{r echo=FALSE, basic_description}
+dim(wq)
+names(wq)
+str(wq)
+summary(wq)
+
+wq$quality <- factor(wq$quality)
+wq$sweetiness <- cut(wq$residual.sugar, c(0,4,12,45,100), labels = c('dry','medium dry','medium','sweet'))
+```
+
+
+##### This dataset contain 13 variables and 4898 objects.
+
+```{r echo=FALSE, quality}
+
+ggplot(data = wq, aes(x = quality)) +
+  geom_bar(fill = 'white', color = 'steelblue') +
+  ggtitle('Quality')
+
+summary(wq$quality)
+```
+
+##### The reason I created this plot is to know the distribution of white wine in quality.
+##### This bar chart displays that most of white wines are quality 6 then 5,7 and we want to know what ingredients will influence the quality.
+
+```{r echo=FALSE,warning=FALSE, fixed.acidity}
+
+ggplot(data = wq, aes(x = fixed.acidity)) +
+  geom_histogram(fill = 'white', color = 'steelblue', bins = 30) +
+  scale_x_continuous(breaks = seq(3.8,14.2,1)) +
+  coord_cartesian(xlim = c(3.8,14.2)) +
+  xlab('fixed.acidity(g/dm^3)') +
+  ggtitle('Fixed Acidity')
+
+summary(wq$fixed.acidity)
+```
+
+##### The reason I created this plot is to know the distribution of white wine in fixed acidity. 
+##### Most wines have fixed acidity between 5.8(g/dm^3) - 7.8(g/dm^3)
+
+```{r echo=FALSE, residual.sugar}
+
+ggplot(data = wq, aes(x = residual.sugar)) +
+  geom_histogram(fill = 'white', color = 'steelblue',bins = 100) +
+  scale_x_continuous(breaks = seq(0,30,1)) +
+  coord_cartesian(xlim = c(0,30)) +
+  xlab('residual.sugar(g/dm^3)') +
+  ggtitle('Residual Sugar')
+
+summary(wq$residual.sugar)
+```
+
+##### The reason I created this plot is to know the distribution of white wine in residual sugar.
+##### Most wines have residual sugar at 2(g/dm^3) and according to the summary result, it shows that Max:65.8(g/dm^3) is a outlier.
+
+```{r echo=FALSE, chlorides}
+
+ggplot(data = wq, aes(x = chlorides)) +
+  geom_histogram(fill = 'white', color = 'steelblue', bins = 100) +
+  scale_x_continuous(breaks = seq(0.009,0.346,0.02)) +
+  coord_cartesian(xlim = c(0.009,0.15)) +
+  xlab('chlorides(g/dm^3)') +
+  ggtitle('Chlorides')
+
+
+summary(wq$chlorides)
+```
+
+##### The reason I created this plot is to know the distribution of white wine in chlorides.
+##### Most wines have chlorides at 0.029(g/dm^3) - 0.059(g/dm^3) and there are some outliers.
+
+```{r echo=FALSE, total.sulfur.dioxide}
+
+ggplot(data = wq, aes(x = total.sulfur.dioxide)) +
+  geom_histogram(fill = 'white', color = 'steelblue', bins = 30) +
+  scale_x_continuous(breaks = seq(0,300,50)) +
+  coord_cartesian(xlim = c(0,300)) +
+  xlab('total.sulfur.dioxide(mg/dm^3)') +
+  ggtitle('Total sulfur Dioxide')
+
+summary(wq$total.sulfur.dioxide)
+
+```
+
+##### The reason I created this plot is to know the distribution of white wine in total sulfur dioxide.
+##### The mean is 138.4 and the median is 134 so we can know total sulfur dioxide is near a normal distribution.
+
+```{r echo=FALSE, pH}
+
+ggplot(data = wq, aes(x = pH)) +
+  geom_histogram(fill = 'white', color = 'steelblue', bins = 30) +
+  scale_x_continuous(breaks = seq(2,4,0.1)) +
+  ggtitle('pH')
+
+
+summary(wq$pH)
+```
+
+##### The reason I created this plot is to know the distribution of white wine in pH.
+##### Because The mean is 3.188 and the median is 3.18, we can infer that pH is closer to normal distribution than total sulfur dioxide.
+
+```{r echo=FALSE, alcohol}
+
+ggplot(data = wq, aes(x = alcohol)) +
+  geom_histogram(fill = 'white', color = 'steelblue', bins = 50) +
+  scale_x_continuous(breaks = seq(8,14,0.5)) +
+  coord_cartesian(xlim = c(8,14)) +
+  xlab('alcohol(%)') +
+  ggtitle('Alcohol')
+  
+summary(wq$alcohol)
+```
+
+##### The reason I created this plot is to know the distribution of white wine in alcohol.
+##### The plot is an interesting one that is different from others because it doesn't look like a normal distribution. This diagram shows that alcohol distributes more averagely than other variables.
+
+```{r echo=FALSE, sweetiness}
+
+ggplot(data = wq, aes(x = sweetiness)) +
+  geom_bar(fill = 'white', color = 'steelblue') +
+  ggtitle('Sweetiness')
+
+
+summary(wq$sweetiness)
+```
+
+##### The reason I created this plot is to know the distribution of white wine in sweetiness.
+#### Most white wines are dry and medium dry. Dry and medium dry take up 83% of all white wines.
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+
+##### There are 4849 white wines in the dataset with 13 variables. (fixed acidity, volatile acidity, titric acid, residual sugar, chlorides, free sulfur dixoxide, total sulfur dioxide, density, pH, sulphates, alcohol, quality) There are all numeric variables and the most important variable quality is also so I transfer it into factor.
+
+#####          worst ----------> best
+##### quality  0,1,2,3,4,5,6,7,8,9,10
+
+##### Other observations:
+#####    · Most white wines are at quality 6
+#####    · Lots of white wines have near 1.5(g/dm^3) residual sugar
+#####    · Alcohol is not a normal distribution but its' mean and median are almost the same
+#####    · Dry and medium dry take up 83% of all white wines
+
+### What is/are the main feature(s) of interest in your dataset?
+
+##### The main feature of interest in this dataset is quality because I want to find what ingredients(fixed acidity, residual sugar, chlorides, total sulfur dioxide, alcohol) would exactually affect the quality of white wines.
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
+##### The reason why I choose the ingredients is that ingredients will influence the taste of wine and the quality variable is graded by expert.
+
+### Did you create any new variables from existing variables in the dataset?
+
+##### I create a sweetiness variable to separate white wines by sweetiness because it will be more clear to know the sweetiness of white wines. There are four classes of sweetiness(dry, medium dry, medium, sweet).
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+##### The quality variable displays that a normal distribution. There are almost 5000 white wines in the dataset and there is no 0,1,2,10. As the result, I think that it might be a bias because the expert who graded white wines doesn't want to rank too high or low.
+
+##### The residual sugar variable shows that most wines is near 1.5(g/dm^3). That is the point we can discuss and make some questions on it.
+
+##### The alcohol variable isn't a normal distribution but its' mean and median are so close because alcohol at 9.5% are much more than other percentage.
+
+
+# Bivariate Plots Section
+```{r echo=FALSE, wq_cor}
+wq_cor <- wq 
+
+wq_cor$X <- NULL
+wq_cor$volatile.acidity <- NULL
+wq_cor$citric.acid <- NULL
+wq_cor$free.sulfur.dioxide <- NULL
+wq_cor$sulphates <- NULL
+wq_cor$quality <- as.numeric(wq_cor$quality)
+wq_cor$sweetiness <- as.numeric(wq_cor$sweetiness)
+
+
+```
+
+```{r echo=FALSE, correlation}
+
+round(cor(wq_cor),3)
+W <- cor(wq_cor)
+corrplot(W, method = "number")
+
+wq$quality <- as.factor(wq$quality)
+wq$sweetiness <- as.factor(wq$sweetiness)
+```
+
+##### The reason why I create this plot is to know the correlation of coefficient between every variables.
+##### I create a new dataFrame named wq_cor and drew this plot which tells us every correlation coefficient between variables.
+
+
+```{r echo=FALSE, fixed_acidity_quality}
+
+ggplot(data = wq, aes(x = fixed.acidity, fill = quality)) +
+  geom_histogram(color = 'steelblue', bins = 50) +
+  coord_cartesian(xlim = c(2.5,15)) +
+  ggtitle('Fixed Acidity Stacks by Quality')
+
+
+```
+
+
+```{r echo=FALSE, acidity_boxplot}
+
+ggplot(data = wq, aes(x = quality, y = fixed.acidity)) +
+  geom_boxplot()
+
+summary(wq$quality)
+```
+
+##### The reason why I create these plot are to know how quality distribute in fixed acidity and every qualitys' fixed acidity status.
+
+##### These two plots tell that most quality are distributed averagely, but quality 3 has two times range than others at fixed acidity and quality 9 has a half range than others.
+
+```{r echo=FALSE, residual_sugar_quality}
+
+ggplot(data = wq, aes(x = residual.sugar, fill = quality)) +
+  geom_histogram(color = 'steelblue', bins = 50) +
+  coord_cartesian(xlim = c(0,30)) +
+  scale_x_continuous(breaks = seq(0,30,2))
+
+```
+
+##### The reason why I create this plot is to know how quality distribute in residual sugar.
+##### The plot shows that every quality distribute normally in residual sugar.
+
+```{r echo=FALSE, chlorides_quality}
+
+ggplot(data = wq, aes(x = chlorides, fill = quality)) +
+  geom_histogram(color = 'steelblue', bins = 50) +
+  scale_x_log10() +
+  xlab('Chlorides(log10)') +
+  ggtitle('Chlorides(log10) Stacks by Quality')
+
+```
+
+##### The reason why I create this plot is to know how quality distribute in chlorides.
+##### The plot shows that every quality distribute normally in chlorides(log10)
+
+```{r echo=FALSE, total_sulfur_dioxide_quality}
+
+ggplot(data = wq, aes(x = total.sulfur.dioxide, fill = quality)) +
+  geom_histogram(color = 'steelblue', bins = 50) +
+  xlab('total sulfur dioxide (mg / dm^3)') +
+  ggtitle('Total Sulfur Dioxide Stacks by Quality')
+
+```
+
+##### The reason why I create this plot is to know how quality distribute in total sulfur dioxide.
+##### The plot also tells that every quality distribute normally in total sulfur dioxide.
+
+
+```{r echo=FALSE, warning=FALSE, density}
+
+ggplot(data = wq, aes(x = density, fill = quality)) +
+  geom_histogram(color = 'steelblue', bins = 50) +
+  scale_x_continuous(limits = c(0.98,1.02)) +
+  ggtitle('Density Stacks by Quality')
+
+```
+
+##### The reason why I create this plot is to know how quality distribute in density.
+##### The plot display that every quality distribute averagely in density
+
+```{r echo=FALSE, density_boxplot}
+
+ggplot(data = wq, aes(x = quality, y = density)) +
+  geom_boxplot() +
+  coord_cartesian(ylim = c(0.99,1.00))
+
+by(wq$density,wq$quality,summary)
+```
+
+##### The reason why I create this plot is to know what composition of quality in density.
+##### It is interesting that 9 is the highest quality and it's density is the lowest.
+
+```{r echo=FALSE, pH_quality}
+
+ggplot(data = wq, aes(x = pH, fill = quality)) +
+  geom_histogram(bins = 50, color = 'steelblue') +
+  ggtitle('pH Stacks by Quality')
+
+```
+
+##### The reason why I create this plot is to know how quality distribute in pH.
+##### It shows almost like normal distribution.
+
+```{r echo=FALSE, alcohol_quality}
+
+ggplot(data = wq, aes(x = alcohol, fill = quality)) +
+  geom_histogram(color = 'steelblue', bins = 50) +
+  scale_x_continuous(breaks = seq(8,14,1)) +
+  xlab('alcohol(%)') +
+  ggtitle('Alcohol Stacks by quality')
+
+```
+
+##### The reason why I create this plot is to know how quality distribute in alcohol.
+##### The plot is the most different that quality quality distribute normally in the range 8-12 but white wines in 12-14 are above quality 5.
+
+```{r echo=FALSE, alcohol_boxplot}
+
+ggplot(data = wq, aes(x = quality, y = alcohol)) +
+  geom_boxplot()
+
+by(wq$alcohol, wq$quality, summary)
+```
+
+##### With this plot and statistic, quality 9 is different from others. We might speculate that high percentage of alcohol could be high quality.
+
+```{r echo=FALSE,warning=FALSE, alcohol_facet_by_quality}
+
+ggplot(data = wq, aes(x = alcohol)) +
+  geom_histogram(fill = 'white', color = 'steelblue', bins = 50) +
+  scale_x_continuous(breaks = seq(8,14,1)) +
+  scale_y_log10() +
+  facet_wrap(~quality) +
+  xlab('alcohol(%)') +
+  ylab('count(log10)')
+
+```
+
+##### The histogram of alcohol and quality shows that most white wines' quality separate averagely below 12%, but quality 5-9 also show at 12%-14%. It tells that high alcohol percentage might be easier to be high quality.
+
+```{r echo=FALSE, sweetiness_quality}
+
+ggplot(data = wq, aes(x = sweetiness, fill = quality)) +
+  geom_bar(color = 'steelblue') +
+  ggtitle('Sweetiness Stacks by Quality')
+
+by(wq$sweetiness,wq$quality,summary)
+```
+
+
+##### This diagram tells that every quality of sweetiness takes up almost the same percentage but the quality 7 is a little different. The quality 7 takes up more percentage at dry above other sweetiness.
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+##### 1. Density has strongly positive relationship with residual sugar and sweetiness but it has strongly negative relationship with alcohol.
+##### 2. The reason why residual sugar correlates strongly with sweetiness because it was used to create sweetiness.
+##### 3. Quality is no obvious relationship with other variables. Alcohol is the one which has the highest correlation of coefficient with quality and it's 0.44
+##### 4. There doesn't have a specific variable that really affect quality because quality distributes normally at every variables.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+##### I didn't find any interesting relationships. The relationships between every variables are normal. Density has high relationships with residual sugar and total sulfur dioxide and low relationship with alcohol.
+
+### What was the strongest relationship you found?
+
+##### The strongest relationship I found is between residual sugar and sweetiness cause I used it to create sweetiness. The second strong relationship is density and residual sugar. That makes sense because residual sugar correlates strongly with density and so does sweetiness.
+
+
+
+# Multivariate Plots Section
+
+```{r echo=FALSE,warning=FALSE, alcohol_multivariate_Plots}
+
+ggplot(data = wq, aes(x = alcohol, y = density, color = sweetiness)) +
+  geom_jitter(alpha = 0.5) +
+  geom_smooth(size = 4) +
+  scale_color_brewer(type = "seq", palette = "YlOrRd") +
+  scale_y_continuous(breaks = seq(0.98,1.01,0.01)) +
+  coord_cartesian(ylim = c(0.98,1.01)) +
+  facet_wrap(~quality) +
+  ggtitle("Facet Wrap by Quality")
+
+```
+
+##### This picture shows that the density is lower and alcohol is higher. The wine is sweeter and the density will be higher but there is no relationship with quality.
+
+```{r echo=FALSE,warning=FALSE, residual_Multi}
+
+ggplot(data = wq, aes(x = residual.sugar, y = density, color = sweetiness)) +
+  geom_jitter() +
+  geom_smooth(size = 4) +
+  scale_color_brewer(type = "seq", palette = "RdYlGn") +
+  scale_x_log10() +
+  facet_wrap(~quality) +
+  xlab('residual.sugar(log10)') +
+  ggtitle("Facet Wrap by Quality")
+
+```
+
+```{r echo=FALSE,warning=FALSE, sulfur_Multi}
+
+ggplot(data = wq, aes(x = total.sulfur.dioxide, y = density, color = sweetiness)) +
+  geom_jitter(alpha = 0.5) +
+  geom_smooth(size = 4) +
+  scale_color_brewer(type = "seq", palette = "RdYlGn") +
+  scale_x_continuous(breaks = seq(0,300,50)) +
+  coord_cartesian(xlim = c(0,300), ylim = c(0.98,1.01)) +
+  facet_wrap(~quality) +
+  ggtitle("Facet Wrap by Quality")
+
+```
+
+##### Sugar and sulfur dioxide does not affect the quality of white wine but they have positive relationship with density
+
+
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+##### There are not strong relationship with these variables.
+
+### Were there any interesting or surprising interactions between features?
+
+##### That are not any interesting or surprising interactions between feafures.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE,warning=FALSE, Plot_One}
+
+ggplot(data = wq, aes(x = quality)) +
+  geom_bar(fill = 'white', color = 'steelblue') +
+  ggtitle('Quality')
+```
+
+### Description One
+
+##### This plot is interesting because quality 5,6,7 take up 92.5% of this sample and there does not have quality 1,2 and 10.
+
+### Plot Two
+```{r echo=FALSE,warning=FALSE, Plot_Two}
+
+ggplot(data = wq, aes(x = sweetiness, fill = quality)) +
+  geom_bar(color = 'steelblue') +
+  ggtitle('Sweetiness Stacks by Quality')
+
+```
+
+### Description Two
+
+##### This plot shows that dry and medium dry take up 83% of all white wines and quality is alloted averagely at dry, medium dry and medium.
+
+### Plot Three
+```{r echo=FALSE,warning=FALSE, Plot_Three}
+
+ggplot(data = wq, aes(x = alcohol, y = density, color = quality)) +
+  geom_jitter(alpha = 1) +
+  coord_cartesian(ylim = c(0.985,1)) +
+  scale_color_brewer(type = "diverging", palette = "RdBu") +
+  xlab('alcohol(%)')
+
+```
+
+### Description Three
+
+##### The picture shows that alcohol and density have strongly negitive correlation but having nothing to do with quality. It indicate that we can't use alcohol and density to predict quality but we could do a linear regression model with density and alcohol. It can help us to put one of them into the model and predict another one. 
+
+------
+
+# Reflection
+
+##### The project help me to review the skill in lesson 4 and I create lots of plots, histogram, barplot, boxplot, scatter plot and so on. It also let me know how to deal with a dataset and find something interesting from it. 
+##### The primary goal of my research is to find which variable would affect the quality of white wine but I think that it is very difficult to do because the quality is defined by people. It is tough to understand how people graded white wines. It can not only use ingredients to predict quality cause people would grade by it's smell, taste, appearence and human's favor although the people who graded are experts.
+##### But, we also can find some relationships between all ingredients such that what ingredients would affect another one. Creating linear model is also an important way we can use to. For example, we could use density to predict what percentage of alcohol is.
